@@ -1,204 +1,220 @@
 'use client';
-
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { toast } from 'sonner';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
+import { toast } from 'sonner';
 
-const DAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי'];
-const OFF_CATEGORIES = [
-  { value: 'medical', label: 'מחלה/רפואי 🏥' },
-  { value: 'personal', label: 'אישי' },
-  { value: 'other', label: 'אחר' },
-];
+const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
+const SHIFT_LABELS: Record<string, string> = { morning: 'בוקר', evening: 'ערב', rest: 'מנוחה', off: 'חופש' };
+const OFF_CATEGORIES = ['מחלה', 'חופשה', 'אחר'];
 
-function getWeekStart(date: Date): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() - d.getDay());
-  d.setHours(0, 0, 0, 0);
-  return d;
+function formatWeekRange(weekStart: string): string {
+  const d = new Date(weekStart);
+  const start = new Date(d);
+  const end = new Date(d);
+  end.setDate(end.getDate() + 5);
+  const fmt = (dt: Date) => dt.getDate() + '.' + (dt.getMonth() + 1);
+  return fmt(start) + ' - ' + fmt(end);
 }
 
-interface ShiftEntry {
-  day_of_week: number;
-  shift_type: string;
-  off_reason: string;
-  off_category: string;
-}
+type ShiftRow = { day_of_week: number; shift_type: string; off_reason: string; off_category: string; notes?: string };
+type WeekData = { id: string; week_start: string; is_open: boolean; branch_id: string };
+type Employee = { id: string; full_name: string; branch_id: string; role: string };
+
+const defaultShifts = (): ShiftRow[] =>
+  Array.from({ length: 6 }, (_, i) => ({
+    day_of_week: i, shift_type: 'morning', off_reason: '', off_category: '', notes: '',
+  }));
 
 export default function EmployeeRequestPage() {
-  const supabase = createClient();
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [weekData, setWeekData] = useState<any>(null);
-  const [employeeId, setEmployeeId] = useState('');
-  const [shifts, setShifts] = useState<ShiftEntry[]>(
-    [0,1,2,3,4].map(d => ({ day_of_week: d, shift_type: 'morning', off_reason: '', off_category: 'personal' }))
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-  const [saving, setSaving] = useState(false);
+  const router = useRouter();
+
+  const [emp, setEmp] = useState<Employee | null>(null);
+  const [weekData, setWeekData] = useState<WeekData | null>(null);
+  const [shifts, setShifts] = useState<ShiftRow[]>(defaultShifts());
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => { loadData(); }, []);
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push('/login'); return; }
 
-  async function loadData() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+      const { data: empData } = await supabase
+        .from('employees')
+        .select('id, full_name, branch_id, role')
+        .eq('auth_user_id', user.id)
+        .eq('is_active', true)
+        .single();
 
-    const { data: emp } = await supabase
-      .from('employees')
-      .select('id, branch_id')
-      .eq('auth_user_id', user.id)
-      .single();
-    
-    if (!emp) { setLoading(false); return; }
-    setEmployeeId(emp.id);
+      if (!empData) { router.push('/login'); return; }
+      setEmp(empData);
 
-    const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
-    const weekStartStr = getWeekStart(today).toISOString().split('T')[0];
-
-    const { data: week } = await supabase
-      .from('schedule_weeks')
-      .select('*')
-      .eq('branch_id', emp.branch_id)
-      .eq('week_start', weekStartStr)
-      .single();
-    setWeekData(week);
-
-    if (week) {
-      // Load existing requests
-      const { data: existing } = await supabase
-        .from('shift_requests')
+      // Fetch the OPEN week for the employee's branch (not based on current date)
+      const { data: week } = await supabase
+        .from('schedule_weeks')
         .select('*')
-        .eq('week_id', week.id)
-        .eq('employee_id', emp.id);
-      
-      if (existing && existing.length > 0) {
-        setSubmitted(true);
-        setShifts(prev => prev.map(s => {
-          const ex = existing.find(e => e.day_of_week === s.day_of_week);
-          return ex ? { day_of_week: ex.day_of_week, shift_type: ex.shift_type, off_reason: ex.off_reason || '', off_category: ex.off_category || 'personal' } : s;
-        }));
-      }
-    }
-    setLoading(false);
-  }
+        .eq('branch_id', empData.branch_id)
+        .eq('is_open', true)
+        .order('week_start', { ascending: false })
+        .maybeSingle();
 
-  function updateShift(day: number, field: string, value: string) {
-    setShifts(prev => prev.map(s => 
-      s.day_of_week === day ? { ...s, [field]: value } : s
-    ));
+      setWeekData(week);
+
+      if (week) {
+        // Load existing shift requests for this week
+        const { data: existingReqs } = await supabase
+          .from('shift_requests')
+          .select('*')
+          .eq('week_id', week.id)
+          .eq('employee_id', empData.id)
+          .order('day_of_week');
+
+        if (existingReqs && existingReqs.length > 0) {
+          setSubmitted(true);
+          const filled = defaultShifts().map((def) => {
+            const found = existingReqs.find((r: ShiftRow) => r.day_of_week === def.day_of_week);
+            return found
+              ? { day_of_week: def.day_of_week, shift_type: found.shift_type || 'morning', off_reason: found.off_reason || '', off_category: found.off_category || '', notes: found.notes || '' }
+              : def;
+          });
+          setShifts(filled);
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase, router]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  function updateShift(dayIndex: number, field: keyof ShiftRow, value: string) {
+    setShifts(prev => prev.map((s, i) => i === dayIndex ? { ...s, [field]: value } : s));
   }
 
   async function submit() {
-    // Validation
-    const offCount = shifts.filter(s => s.shift_type === 'off').length;
-    if (offCount > 1) {
-      toast.error('לא ניתן לבקש יותר מיום חופש אחד בשבוע');
-      return;
-    }
-    if (!weekData) { toast.error('אין שבוע פתוח'); return; }
-    
+    if (!weekData || !emp) return;
     setSaving(true);
     try {
-      // Delete existing and reinsert
-      await supabase.from('shift_requests')
+      // Delete existing and re-insert
+      await supabase
+        .from('shift_requests')
         .delete()
         .eq('week_id', weekData.id)
-        .eq('employee_id', employeeId);
+        .eq('employee_id', emp.id);
 
       const payload = shifts.map(s => ({
-        employee_id: employeeId,
+        employee_id: emp.id,
         week_id: weekData.id,
         day_of_week: s.day_of_week,
         shift_type: s.shift_type,
-        off_reason: s.shift_type === 'off' ? s.off_reason : null,
-        off_category: s.shift_type === 'off' ? s.off_category : null,
+        off_reason: s.shift_type === 'off' ? (s.off_category || '') : '',
+        off_category: s.shift_type === 'off' ? (s.off_category || '') : '',
+        notes: s.notes || '',
+        status: 'pending',
       }));
 
       const { error } = await supabase.from('shift_requests').insert(payload);
       if (error) throw error;
 
-      toast.success('הבקשה הוגשה בהצלחה!');
+      toast.success('הבקשה נשלחה בהצלחה!');
       setSubmitted(true);
-      router.push('/employee/dashboard');
-    } catch(e: any) {
-      toast.error(e.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'שגיאה';
+      toast.error('שגיאה: ' + msg);
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) return <div className="p-4">טוען...</div>;
+  if (loading) {
+    return <div className="p-4 text-center">טוען...</div>;
+  }
 
   if (!weekData || !weekData.is_open) {
     return (
       <div className="p-4">
-        <div className="card text-center">
-          <p className="text-lg font-medium mb-1">לא ניתן להגיש בקשה</p>
-          <p className="text-sm" style={{color: 'var(--muted)'}}>
-            {!weekData ? 'לא נפתח שבוע על ידי המנהל' : 'השבוע סגור להגשת בקשות'}
-          </p>
+        <div className="card text-center py-10">
+          <div className="text-4xl mb-4">📅</div>
+          <h2 className="text-xl font-semibold mb-2">אין שבוע פתוח כרגע</h2>
+          <p className="text-gray-400">המנהל טרם פתח שבוע להגשת משמרות. בדוק שוב מאוחר יותר.</p>
         </div>
       </div>
     );
   }
 
+  const weekRange = formatWeekRange(weekData.week_start);
+
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">הגשת בקשה</h1>
-        {submitted && (
-          <span className="text-xs px-2 py-1 rounded-full text-white" style={{background: '#16A34A'}}>
-            ✅ הוגש
-          </span>
-        )}
+    <div className="p-4 max-w-2xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">הגשת משמרות</h1>
+        <p className="text-gray-400 mt-1">שבוע {weekRange}</p>
       </div>
-      <p className="text-sm" style={{color: 'var(--muted)'}}>
-        שבוע: {weekData.week_start} | ניתן לבקש עד יום חופש אחד
-      </p>
+
+      {submitted && (
+        <div className="card bg-green-900/30 border border-green-500/30 mb-4 p-3 text-center text-green-300">
+          ✅ הבקשה הוגשה. ניתן לעדכן ולשלוח שוב.
+        </div>
+      )}
 
       <div className="space-y-3">
-        {shifts.map(shift => (
-          <div key={shift.day_of_week} className="card">
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-semibold">{DAY_NAMES[shift.day_of_week]}</span>
-              <select
-                className="input w-auto text-sm py-1 px-2"
-                value={shift.shift_type}
-                onChange={e => updateShift(shift.day_of_week, 'shift_type', e.target.value)}
-              >
-                <option value="morning">בוקר {shift.day_of_week < 5 ? '06:00–14:00' : '05:30–13:30'}</option>
-                <option value="evening">ערב 10:00–17:00</option>
-                {shift.day_of_week !== 5 && <option value="off">חופש</option>}
-              </select>
-            </div>
-            {shift.shift_type === 'off' && (
-              <div className="space-y-2 mt-2">
+        {shifts.map((shift, i) => {
+          const dayDate = new Date(weekData.week_start);
+          dayDate.setDate(dayDate.getDate() + i);
+          const dateLabel = dayDate.getDate() + '.' + (dayDate.getMonth() + 1);
+          const isOff = shift.shift_type === 'off';
+          return (
+            <div key={i} className="card">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-semibold">{DAY_NAMES[i]} <span className="text-gray-400 text-sm mr-1">{dateLabel}</span></span>
                 <select
+                  value={shift.shift_type}
+                  onChange={e => updateShift(i, 'shift_type', e.target.value)}
                   className="input text-sm"
-                  value={shift.off_category}
-                  onChange={e => updateShift(shift.day_of_week, 'off_category', e.target.value)}
                 >
-                  {OFF_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  {Object.entries(SHIFT_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
                 </select>
-                <input
-                  className="input text-sm"
-                  placeholder="סיבה (אופציונלי)"
-                  value={shift.off_reason}
-                  onChange={e => updateShift(shift.day_of_week, 'off_reason', e.target.value)}
-                />
               </div>
-            )}
-          </div>
-        ))}
+              {isOff && (
+                <div className="mb-2">
+                  <label className="block text-sm text-gray-400 mb-1">סיבה</label>
+                  <select
+                    value={shift.off_category}
+                    onChange={e => updateShift(i, 'off_category', e.target.value)}
+                    className="input w-full text-sm"
+                  >
+                    <option value="">בחר סיבה</option>
+                    {OFF_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              )}
+              <input
+                type="text"
+                placeholder="הערות (אופציונלי)"
+                value={shift.notes}
+                onChange={e => updateShift(i, 'notes', e.target.value)}
+                className="input w-full text-sm"
+              />
+            </div>
+          );
+        })}
       </div>
 
       <button
-        className="btn-primary w-full py-3 text-base"
         onClick={submit}
         disabled={saving}
+        className="btn-primary w-full mt-6"
       >
-        {saving ? 'שולח...' : submitted ? 'עדכן בקשה' : 'הגש בקשה'}
+        {saving ? 'שולח...' : submitted ? 'עדכן הגשה' : 'שלח בקשה'}
       </button>
     </div>
   );
