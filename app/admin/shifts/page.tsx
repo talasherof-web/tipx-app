@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
-const DAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-const SHIFT_LABELS: Record<string, string> = { morning: 'בוקר', evening: 'ערב', off: 'חופש', rest: 'מנוחה' };
+const DAY_NAMES = ['×¨××©××','×©× ×','×©×××©×','×¨×××¢×','××××©×','×©××©×','×©××ª'];
+const SHIFT_LABELS: Record<string, string> = { morning: '×××§×¨', evening: '×¢×¨×', off: '×××¤×©', rest: '×× ×××' };
 
 function getWeekStart(date: Date): Date {
   const d = new Date(date);
@@ -18,6 +18,19 @@ function getWeekStart(date: Date): Date {
 function dateToStr(d: Date): string {
   return d.toISOString().split('T')[0];
 }
+function formatWeekRange(weekStartStr: string): string {
+  if (!weekStartStr) return weekStartStr;
+  try {
+    const d = new Date(weekStartStr);
+    const end = new Date(d);
+    end.setDate(end.getDate() + 5);
+    const fmt = (dt: Date) => dt.getDate() + '.' + (dt.getMonth() + 1) + '.' + dt.getFullYear();
+    return fmt(d) + ' - ' + fmt(end);
+  } catch {
+    return weekStartStr;
+  }
+}
+
 
 interface Branch { id: string; name: string; }
 interface Employee { id: string; full_name: string; }
@@ -131,7 +144,7 @@ export default function ShiftsPage() {
 
       if (error) throw error;
       setWeekData(data);
-      toast.success('השבוע נפתח לבקשות');
+      toast.success('××©×××¢ × ×¤×ª× ×××§×©××ª');
     } catch(e: any) {
       toast.error(e.message);
     } finally {
@@ -144,13 +157,13 @@ export default function ShiftsPage() {
     const newState = !weekData.is_open;
     await supabase.from('schedule_weeks').update({ is_open: newState }).eq('id', weekData.id);
     setWeekData({ ...weekData, is_open: newState });
-    toast.success(newState ? 'השבוע נפתח' : 'השבוע נסגר לבקשות');
+    toast.success(newState ? '××©×××¢ × ×¤×ª×' : '××©×××¢ × ×¡××¨ ×××§×©××ª');
   }
 
   async function approveRequest(id: string, approved: boolean) {
     await supabase.from('shift_requests').update({ is_approved: approved }).eq('id', id);
     setRequests(prev => prev.map(r => r.id === id ? { ...r, is_approved: approved } : r));
-    toast.success(approved ? 'אושר' : 'נדחה');
+    toast.success(approved ? '×××©×¨' : '× ×××');
   }
 
   async function saveFinalShift(empId: string, day: number, shiftType: string) {
@@ -181,7 +194,7 @@ export default function ShiftsPage() {
 
   async function finalize() {
     if (!weekData) return;
-    if (!confirm('לאשר ולשלוח את הסידור הסופי?')) return;
+    if (!confirm('×××©×¨ ×××©××× ××ª ××¡××××¨ ××¡××¤×?')) return;
     setSaving(true);
     try {
       await supabase.from('schedule_weeks').update({ 
@@ -190,14 +203,14 @@ export default function ShiftsPage() {
         is_open: false
       }).eq('id', weekData.id);
       setWeekData({ ...weekData, is_finalized: true, is_open: false });
-      toast.success('הסידור אושר ונשלח!');
+      toast.success('××¡××××¨ ×××©×¨ ×× ×©××!');
     } finally {
       setSaving(false);
     }
   }
 
   function copyToWhatsApp() {
-    let text = `סידור עבודה שבוע ${weekStart}\n\n`;
+    let text = `×¡××××¨ ×¢×××× ×©×××¢ ${weekStart}\n\n`;
     for (let day = 0; day <= 6; day++) {
       const dayShifts = finalShifts.filter(fs => fs.day_of_week === day);
       if (dayShifts.length > 0) {
@@ -209,14 +222,14 @@ export default function ShiftsPage() {
         text += '\n';
       }
     }
-    navigator.clipboard.writeText(text).then(() => toast.success('הועתק! הדבק בווטסאפ'));
+    navigator.clipboard.writeText(text).then(() => toast.success('×××¢×ª×§! ××××§ ×××××¡××¤'));
   }
 
-  if (loading && !branches.length) return <div className="p-4">טוען...</div>;
+  if (loading && !branches.length) return <div className="p-4">×××¢×...</div>;
 
   return (
     <div className="p-4 space-y-4">
-      <h1 className="text-2xl font-bold">ניהול משמרות</h1>
+      <h1 className="text-2xl font-bold">× ×××× ××©××¨××ª</h1>
 
       <div className="grid grid-cols-2 gap-2">
         <select className="input" value={selectedBranch}
@@ -235,8 +248,8 @@ export default function ShiftsPage() {
       <div className="card">
         <div className="flex justify-between items-center">
           <div>
-            <span className="font-medium">שבוע: </span>
-            <span>{weekStart}</span>
+            <span className="font-medium">×©×××¢: </span>
+            <span>{formatWeekRange(weekStart)}</span>
           </div>
           {weekData ? (
             <div className="flex items-center gap-1">
@@ -245,17 +258,17 @@ export default function ShiftsPage() {
                       background: weekData.is_finalized ? '#16A34A' : weekData.is_open ? '#D97706' : 'var(--surface)',
                       color: weekData.is_finalized || weekData.is_open ? 'white' : 'var(--text)'
                     }}>
-                {weekData.is_finalized ? '✅ סופי' : weekData.is_open ? '🔓 פתוח' : '🔒 סגור'}
+                {weekData.is_finalized ? 'â ×¡××¤×' : weekData.is_open ? 'ð ×¤×ª××' : 'ð ×¡×××¨'}
               </span>
               {!weekData.is_finalized && (
                 <button className="btn-secondary text-xs px-2 py-1" onClick={toggleWeekOpen}>
-                  {weekData.is_open ? 'סגור' : 'פתח'}
+                  {weekData.is_open ? '×¡×××¨' : '×¤×ª×'}
                 </button>
               )}
             </div>
           ) : (
             <button className="btn-primary text-sm" onClick={openWeek} disabled={saving}>
-              פתח שבוע
+              ×¤×ª× ×©×××¢
             </button>
           )}
         </div>
@@ -272,7 +285,7 @@ export default function ShiftsPage() {
               }}
               onClick={() => setView('requests')}
             >
-              בקשות ({requests.length})
+              ××§×©××ª ({requests.length})
             </button>
             <button
               className="px-3 py-1.5 rounded text-sm font-medium"
@@ -282,7 +295,7 @@ export default function ShiftsPage() {
               }}
               onClick={() => setView('final')}
             >
-              סידור סופי
+              ×¡××××¨ ×¡××¤×
             </button>
           </div>
 
@@ -302,10 +315,10 @@ export default function ShiftsPage() {
                       <div>
                         <div className="font-medium">{req.employees?.full_name}</div>
                         <div className="text-sm" style={{color: 'var(--muted)'}}>
-                          {DAY_NAMES[req.day_of_week]} — {SHIFT_LABELS[req.shift_type]}
-                          {req.off_category === 'medical' && ' 🏥'}
+                          {DAY_NAMES[req.day_of_week]} â {SHIFT_LABELS[req.shift_type]}
+                          {req.off_category === 'medical' && ' ð¥'}
                           {req.day_of_week === 5 && req.shift_type === 'off' && (
-                            <span className="text-red-500"> (שישי!)</span>
+                            <span className="text-red-500"> (×©××©×!)</span>
                           )}
                         </div>
                         {req.off_reason && (
@@ -322,7 +335,7 @@ export default function ShiftsPage() {
                               border: '1px solid #16A34A'
                             }}
                             onClick={() => approveRequest(req.id, true)}
-                          >אשר</button>
+                          >××©×¨</button>
                           <button
                             className="text-xs px-2 py-1 rounded"
                             style={{
@@ -331,14 +344,14 @@ export default function ShiftsPage() {
                               border: '1px solid #DC2626'
                             }}
                             onClick={() => approveRequest(req.id, false)}
-                          >דחה</button>
+                          >×××</button>
                         </div>
                       )}
                     </div>
                   </div>
                 ))}
               {requests.length === 0 && (
-                <div className="card text-center" style={{color: 'var(--muted)'}}>אין בקשות עדיין</div>
+                <div className="card text-center" style={{color: 'var(--muted)'}}>××× ××§×©××ª ×¢××××</div>
               )}
             </div>
           )}
@@ -350,7 +363,7 @@ export default function ShiftsPage() {
                 <table className="w-full text-sm border-collapse">
                   <thead>
                     <tr>
-                      <th className="p-1 text-start text-xs" style={{color: 'var(--muted)'}}>עובד</th>
+                      <th className="p-1 text-start text-xs" style={{color: 'var(--muted)'}}>×¢×××</th>
                       {DAY_NAMES.slice(0,7).map((d, i) => (
                         <th key={i} className="p-1 text-center text-xs" style={{color: 'var(--muted)'}}>{d}</th>
                       ))}
@@ -366,7 +379,7 @@ export default function ShiftsPage() {
                           return (
                             <td key={day} className="p-0.5">
                               {day === 6 ? (
-                                <span className="text-xs text-center block" style={{color: 'var(--muted)'}}>מנוחה</span>
+                                <span className="text-xs text-center block" style={{color: 'var(--muted)'}}>×× ×××</span>
                               ) : (
                                 <select
                                   className="text-xs p-0.5 rounded border w-full"
@@ -381,9 +394,9 @@ export default function ShiftsPage() {
                                   disabled={weekData.is_finalized}
                                 >
                                   <option value="">--</option>
-                                  <option value="morning">בוקר</option>
-                                  <option value="evening">ערב</option>
-                                  <option value="off">חופש</option>
+                                  <option value="morning">×××§×¨</option>
+                                  <option value="evening">×¢×¨×</option>
+                                  <option value="off">×××¤×©</option>
                                 </select>
                               )}
                             </td>
@@ -397,16 +410,16 @@ export default function ShiftsPage() {
               {!weekData.is_finalized && (
                 <div className="flex gap-2">
                   <button className="btn-primary flex-1" onClick={finalize} disabled={saving}>
-                    ✅ שלח סידור סופי
+                    â ×©×× ×¡××××¨ ×¡××¤×
                   </button>
                   <button className="btn-secondary" onClick={copyToWhatsApp}>
-                    📋 העתק לווטסאפ
+                    ð ××¢×ª×§ ×××××¡××¤
                   </button>
                 </div>
               )}
               {weekData.is_finalized && (
                 <button className="btn-secondary w-full" onClick={copyToWhatsApp}>
-                  📋 העתק לווטסאפ
+                  ð ××¢×ª×§ ×××××¡××¤
                 </button>
               )}
             </div>
