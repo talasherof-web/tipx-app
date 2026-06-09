@@ -84,7 +84,7 @@ function pctClass(curr: number, prev: number, inverse = false): string {
 
 export default function ReportsPage() {
   const supabase = createClient();
-  const [activeTab, setActiveTab] = useState<'pl' | 'compare' | 'bcg' | 'calc'>('pl');
+  const [activeTab, setActiveTab] = useState<'pl' | 'compare' | 'bcg' | 'calc' | 'import'>('pl');
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string>('');
   const [reports, setReports] = useState<FinancialReport[]>([]);
