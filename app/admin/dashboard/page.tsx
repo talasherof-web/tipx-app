@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface BranchSummary {
@@ -50,7 +50,7 @@ function monthKey(d: Date): string {
 }
 
 export default function AdminDashboard() {
-  const supabase = createBrowserClient();
+  const supabase = createClient();
   const today = getIsraelDate();
   const todayDay = today.getDay(); // 0=Sun
   const currentMonth = monthKey(today);
