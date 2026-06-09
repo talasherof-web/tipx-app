@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #FFFFFF;
+  --surface: #F8F8F8;
+  --border: #000000;
+  --text: #000000;
+  --muted: #555555;
+  --accent: #111111;
+  --success: #16A34A;
+  --danger: #DC2626;
+  --warning: #D97706;
+}
+
+.dark {
+  --bg: #0A0A0A;
+  --surface: #1A1A1A;
+  --border: #FFFFFF;
+  --text: #FFFFFF;
+  --muted: #AAAAAA;
+  --accent: #EEEEEE;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Heebo', sans-serif;
+  direction: rtl;
+}
+
+.card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.btn-primary {
+  background: var(--text);
+  color: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-family: 'Heebo', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:hover { opacity: 0.85; }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-family: 'Heebo', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-secondary:hover { background: var(--surface); }
+
+.input {
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-family: 'Heebo', sans-serif;
+  font-size: 1rem;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
