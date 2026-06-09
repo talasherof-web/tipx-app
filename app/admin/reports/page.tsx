@@ -39,18 +39,18 @@ interface ImportRow {
 }
 
 const PRODUCT_CODE_MAP: Record<string, string> = {
-  '6000': 'מאפים',
-  '6001': 'לחמניה',
-  '6002': 'עוגות',
-  '6003': 'בוריקאס',
-  '6004': 'פיתות',
-  '6005': 'קרואסונים',
-  '7000': 'שוקולד',
-  '7001': 'מאפים מתוקים',
-  '8000': 'משקאות',
+  '6000': '�����',
+  '6001': '������',
+  '6002': '�����',
+  '6003': '�������',
+  '6004': '�����',
+  '6005': '���������',
+  '7000': '������',
+  '7001': '����� ������',
+  '8000': '������',
 };
 
-const MONTHS_HE = ['×× ×××¨','×¤××¨×××¨','××¨×¥','××¤×¨××','×××','××× ×','××××','×××××¡×','×¡×¤××××¨','×××§××××¨','× ×××××¨','××¦×××¨'];
+const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
 function getIsraelDate() {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
@@ -152,7 +152,7 @@ export default function ReportsPage() {
   // Save financial report
   async function saveReport() {
     if (!editReport.month || !selectedBranch) {
-      toast.error('× × ×××××¨ ××××©');
+      toast.error('נא לבחור חודש');
       return;
     }
     setSaving(true);
@@ -182,12 +182,12 @@ export default function ReportsPage() {
         await supabase.from('financial_reports').insert(payload);
       }
 
-      toast.success('×××× × ×©××¨ ×××¦×××');
+      toast.success('הדוח נשמר בהצלחה');
       setShowModal(false);
       setEditReport({});
       await loadReports();
     } catch (e) {
-      toast.error('×©×××× ××©×××¨×ª ××××');
+      toast.error('שגיאה בשמירת הדוח');
     } finally {
       setSaving(false);
     }
@@ -196,9 +196,9 @@ export default function ReportsPage() {
   // Charts data
   const chartData = [...reports].reverse().map(r => ({
     month: formatMonthLabel(r.month),
-    ××× ×¡××ª: r.revenue,
-    ×××¦×××ª: r.expenses,
-    '×¨××× ×××××': r.revenue - r.expenses,
+    'הכנסות': r.revenue,
+    'הוצאות': r.expenses,
+    'רווח': r.revenue - r.expenses,
   }));
 
   // BCG data
@@ -210,10 +210,10 @@ export default function ReportsPage() {
   }));
 
   function getBcgQuadrant(x: number, y: number): string {
-    if (x >= 50 && y >= 10) return 'â­ ×××× - ××©×§×¢ ××ª×××';
-    if (x >= 50 && y < 10) return 'ð ×¤×¨× - ×©×××¨ ×¢× ××¦××××ª';
-    if (x < 50 && y >= 10) return 'â ×¡××× ×©××× - ××× ××¤× × ××©×§×¢×';
-    return 'ð ××× - ×©×§×× ××¤×¡×§×';
+    if (x >= 50 && y >= 10) return '⭐ כוכב - השקע ותגדל';
+    if (x >= 50 && y < 10) return '🐄 פרה - שמור על יציבות';
+    if (x < 50 && y >= 10) return '❓ סימן שאלה - בחן לפני השקעה';
+    return '🐕 כלב - שקול הפסקה';
   }
 
   // Calculator
@@ -254,12 +254,12 @@ export default function ReportsPage() {
           }
         }
         if (rows.length === 0) {
-          setImportError('לא נמצאו נתונים בקובץ. ודא שהפורמט נכון: קוד,שם,כמות,הכנסות');
+          setImportError('�� ����� ������ �����. ��� ������� ����: ���,��,����,������');
         } else {
           setImportedRows(rows);
         }
       } catch {
-        setImportError('שגיאה בקריאת הקובץ');
+        setImportError('����� ������ �����');
       }
     };
     reader.readAsText(file, 'utf-8');
@@ -299,26 +299,26 @@ export default function ReportsPage() {
         }
       }
       
-      toast.success('הנתונים נשמרו בהצלחה!');
+      toast.success('������� ����� ������!');
       setImportedRows([]);
       loadProducts();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'שגיאה';
-      toast.error('שגיאה: ' + msg);
+      const msg = err instanceof Error ? err.message : '�����';
+      toast.error('�����: ' + msg);
     }
   }
 
   const tabs = [
-    { id: 'pl', label: '×¨××× ×××¤×¡×' },
-    { id: 'compare', label: '××©××××ª ×¡× ××¤××' },
+    { id: 'pl', label: 'רווח והפסד' },
+    { id: 'compare', label: 'השוואת סניפים' },
     { id: 'bcg', label: 'BCG Matrix' },
-    { id: 'calc', label: '×××©×××' },
-    { id: 'import', label: 'ייבוא נתונים' },
+    { id: 'calc', label: 'מחשבון' },
+    { id: 'import', label: '����� ������' },
   ];
 
   return (
     <div className="p-4 space-y-4">
-      <h1 className="text-2xl font-bold">×××××ª</h1>
+      <h1 className="text-2xl font-bold">דוחות</h1>
 
       {/* Branch selector */}
       <select
@@ -350,7 +350,7 @@ export default function ReportsPage() {
       {activeTab === 'pl' && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">×¨××× ×××¤×¡× ××××©×</h2>
+            <h2 className="text-lg font-semibold">רווח והפסד חודשי</h2>
             <button
               className="btn-primary text-sm px-3 py-1.5"
               onClick={() => {
@@ -358,26 +358,26 @@ export default function ReportsPage() {
                 setShowModal(true);
               }}
             >
-              + ×××¡×£ ×××
+              + הוסף דוח
             </button>
           </div>
 
           {/* Current vs Previous comparison */}
           {currentMonthReport && (
             <div className="card">
-              <h3 className="font-semibold mb-2">××××© × ×××× ××× ×§×××</h3>
+              <h3 className="font-semibold mb-2">חודש נוכחי מול קודם</h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {[
-                  { label: '××× ×¡××ª', curr: currentMonthReport.revenue, prev: prevMonthReport?.revenue || 0 },
-                  { label: '×××¦×××ª', curr: currentMonthReport.expenses, prev: prevMonthReport?.expenses || 0, inverse: true },
-                  { label: '×©××¨', curr: currentMonthReport.labor_cost, prev: prevMonthReport?.labor_cost || 0, inverse: true },
-                  { label: '×§×××¢××ª', curr: currentMonthReport.fixed_costs, prev: prevMonthReport?.fixed_costs || 0, inverse: true },
-                  { label: '××××¨× ×××', curr: currentMonthReport.raw_materials, prev: prevMonthReport?.raw_materials || 0, inverse: true },
-                  { label: '×¨××× ×××××', curr: currentMonthReport.revenue - currentMonthReport.expenses, prev: (prevMonthReport?.revenue || 0) - (prevMonthReport?.expenses || 0) },
+                  { label: 'הכנסות', curr: currentMonthReport.revenue, prev: prevMonthReport?.revenue || 0 },
+                  { label: 'הוצאות', curr: currentMonthReport.expenses, prev: prevMonthReport?.expenses || 0, inverse: true },
+                  { label: 'שכר', curr: currentMonthReport.labor_cost, prev: prevMonthReport?.labor_cost || 0, inverse: true },
+                  { label: 'קבועות', curr: currentMonthReport.fixed_costs, prev: prevMonthReport?.fixed_costs || 0, inverse: true },
+                  { label: 'חומרי גלם', curr: currentMonthReport.raw_materials, prev: prevMonthReport?.raw_materials || 0, inverse: true },
+                  { label: 'רווח גולמי', curr: currentMonthReport.revenue - currentMonthReport.expenses, prev: (prevMonthReport?.revenue || 0) - (prevMonthReport?.expenses || 0) },
                 ].map(item => (
                   <div key={item.label} className="p-2 rounded" style={{background: 'var(--surface)'}}>
                     <div style={{color: 'var(--muted)'}} className="text-xs">{item.label}</div>
-                    <div className="font-bold">âª{item.curr.toLocaleString()}</div>
+                    <div className="font-bold">₪{item.curr.toLocaleString()}</div>
                     {item.prev !== undefined && item.prev !== 0 && (
                       <div className={`text-xs ${pctClass(item.curr, item.prev, item.inverse)}`}>
                         {pctChange(item.curr, item.prev)}
@@ -395,11 +395,11 @@ export default function ReportsPage() {
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={chartData.slice(-6)}>
                   <XAxis dataKey="month" tick={{fontSize: 9}} />
-                  <YAxis tick={{fontSize: 9}} tickFormatter={v => 'âª' + (v/1000).toFixed(0) + 'K'} />
-                  <Tooltip formatter={(v: number) => 'âª' + v.toLocaleString()} />
+                  <YAxis tick={{fontSize: 9}} tickFormatter={v => '₪' + (v/1000).toFixed(0) + 'K'} />
+                  <Tooltip formatter={(v: number) => '₪' + v.toLocaleString()} />
                   <Legend />
-                  <Bar dataKey="××× ×¡××ª" fill="#16A34A" radius={3} />
-                  <Bar dataKey="×××¦×××ª" fill="#DC2626" radius={3} />
+                  <Bar dataKey="הכנסות" fill="#16A34A" radius={3} />
+                  <Bar dataKey="הוצאות" fill="#DC2626" radius={3} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -416,20 +416,20 @@ export default function ReportsPage() {
                   <div className="flex justify-between items-start mb-1">
                     <span className="font-semibold">{formatMonthLabel(report.month)}</span>
                     <span className={gross >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                      ×¨×××: âª{gross.toLocaleString()}
+                      רווח: ₪{gross.toLocaleString()}
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-1 text-xs" style={{color: 'var(--muted)'}}>
-                    <span>××× ×¡××ª: âª{report.revenue.toLocaleString()}</span>
-                    <span>×××¦×××ª: âª{report.expenses.toLocaleString()}</span>
-                    <span>× ×§×: âª{net.toLocaleString()}</span>
+                    <span>הכנסות: ₪{report.revenue.toLocaleString()}</span>
+                    <span>הוצאות: ₪{report.expenses.toLocaleString()}</span>
+                    <span>נקי: ₪{net.toLocaleString()}</span>
                   </div>
                 </div>
               );
             })}
             {reports.length === 0 && (
               <div className="card text-center" style={{color: 'var(--muted)'}}>
-                ××× ×××××ª ×¢××××. ×××¥ "×××¡×£ ×××" ×××ª×××.
+                אין דוחות עדיין. לחץ "הוסף דוח" להתחלה.
               </div>
             )}
           </div>
@@ -439,17 +439,17 @@ export default function ReportsPage() {
       {/* Compare Tab */}
       {activeTab === 'compare' && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">××©××××ª ×××¦××¢×× - 6 ××××©××</h2>
+          <h2 className="text-lg font-semibold">השוואת ביצועים - 6 חודשים</h2>
           <div className="card">
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={chartData.slice(-6)}>
                 <XAxis dataKey="month" tick={{fontSize: 9}} />
-                <YAxis tick={{fontSize: 9}} tickFormatter={v => 'âª' + (v/1000).toFixed(0) + 'K'} />
-                <Tooltip formatter={(v: number) => 'âª' + v.toLocaleString()} />
+                <YAxis tick={{fontSize: 9}} tickFormatter={v => '₪' + (v/1000).toFixed(0) + 'K'} />
+                <Tooltip formatter={(v: number) => '₪' + v.toLocaleString()} />
                 <Legend />
-                <Line type="monotone" dataKey="××× ×¡××ª" stroke="#16A34A" strokeWidth={2} dot />
-                <Line type="monotone" dataKey="×××¦×××ª" stroke="#DC2626" strokeWidth={2} dot />
-                <Line type="monotone" dataKey="×¨××× ×××××" stroke="#2563EB" strokeWidth={2} dot />
+                <Line type="monotone" dataKey="הכנסות" stroke="#16A34A" strokeWidth={2} dot />
+                <Line type="monotone" dataKey="הוצאות" stroke="#DC2626" strokeWidth={2} dot />
+                <Line type="monotone" dataKey="רווח גולמי" stroke="#2563EB" strokeWidth={2} dot />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -457,16 +457,16 @@ export default function ReportsPage() {
           {chartData.length >= 2 && (() => {
             const last = chartData[chartData.length - 1];
             const prev = chartData[chartData.length - 2];
-            const revTrend = last.××× ×¡××ª > prev.××× ×¡××ª ? '×¢××××' : '××¨×××';
-            const pct = prev.××× ×¡××ª > 0 ? Math.abs((last.××× ×¡××ª - prev.××× ×¡××ª) / prev.××× ×¡××ª * 100).toFixed(1) : '0';
+            const revTrend = last.הכנסות > prev.הכנסות ? 'עלייה' : 'ירידה';
+            const pct = prev.הכנסות > 0 ? Math.abs((last.הכנסות - prev.הכנסות) / prev.הכנסות * 100).toFixed(1) : '0';
             return (
               <div className="card">
-                <h3 className="font-semibold mb-1">× ××ª×× ×××××××</h3>
+                <h3 className="font-semibold mb-1">ניתוח אוטומטי</h3>
                 <p className="text-sm">
-                  ××× <strong>{revTrend}</strong> ×©× <strong>{pct}%</strong> ×××× ×¡××ª ××××××© ××§×××.{' '}
-                  {last['×¨××× ×××××'] > prev['×¨××× ×××××'] 
-                    ? '××¨××× ×××××× ××©×ª×¤×¨ â ××××× ×××××.' 
-                    : '××¨××× ×××××× ××¨× â ××© ××××× ××ª ××× × ××××¦×××ª.'}
+                  חלה <strong>{revTrend}</strong> של <strong>{pct}%</strong> בהכנסות מהחודש הקודם.{' '}
+                  {last['רווח גולמי'] > prev['רווח גולמי'] 
+                    ? 'הרווח הגולמי השתפר — כיוון חיובי.' 
+                    : 'הרווח הגולמי ירד — יש לבחון את מבנה ההוצאות.'}
                 </p>
               </div>
             );
@@ -480,18 +480,18 @@ export default function ReportsPage() {
           <h2 className="text-lg font-semibold">BCG Matrix</h2>
           {bcgData.length === 0 ? (
             <div className="card text-center" style={{color: 'var(--muted)'}}>
-              ××× × ×ª×× × ×××¦×¨××. ××× ×××¦×¨×× ×××£ ××××¨××ª ××¡× ××£.
+              אין נתוני מוצרים. הזן מוצרים בדף הגדרות הסניף.
             </div>
           ) : (
             <>
               <div className="card">
                 <div className="text-xs mb-2" style={{color: 'var(--muted)'}}>
-                  X = × ×ª× ×©××§ (%) | Y = ×¦×××× (%) | ×××× × ×§××× = ××××¨××ª
+                  X = נתח שוק (%) | Y = צמיחה (%) | גודל נקודה = מכירות
                 </div>
                 <ResponsiveContainer width="100%" height={250}>
                   <ScatterChart>
-                    <XAxis type="number" dataKey="x" name="× ×ª× ×©××§" domain={[0, 100]} tick={{fontSize: 9}} label={{value: '× ×ª× ×©××§ %', position: 'insideBottom', offset: -5, fontSize: 9}} />
-                    <YAxis type="number" dataKey="y" name="×¦××××" domain={[0, 30]} tick={{fontSize: 9}} label={{value: '×¦×××× %', angle: -90, position: 'insideLeft', fontSize: 9}} />
+                    <XAxis type="number" dataKey="x" name="נתח שוק" domain={[0, 100]} tick={{fontSize: 9}} label={{value: 'נתח שוק %', position: 'insideBottom', offset: -5, fontSize: 9}} />
+                    <YAxis type="number" dataKey="y" name="צמיחה" domain={[0, 30]} tick={{fontSize: 9}} label={{value: 'צמיחה %', angle: -90, position: 'insideLeft', fontSize: 9}} />
                     <Tooltip cursor={{strokeDasharray: '3 3'}} 
                              content={({ payload }) => {
                                if (!payload?.[0]) return null;
@@ -516,10 +516,10 @@ export default function ReportsPage() {
                 </ResponsiveContainer>
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="card" style={{borderColor: '#F59E0B'}}>â­ ×××× â ××©×§×¢ ××ª×××</div>
-                <div className="card" style={{borderColor: '#16A34A'}}>ð ×¤×¨× â ×©×××¨ ××¦××××ª</div>
-                <div className="card" style={{borderColor: '#3B82F6'}}>â ×¡××× ×©××× â ×××</div>
-                <div className="card" style={{borderColor: '#6B7280'}}>ð ××× â ×©×§×× ××¤×¡×§×</div>
+                <div className="card" style={{borderColor: '#F59E0B'}}>⭐ כוכב — השקע ותגדל</div>
+                <div className="card" style={{borderColor: '#16A34A'}}>🐄 פרה — שמור יציבות</div>
+                <div className="card" style={{borderColor: '#3B82F6'}}>❓ סימן שאלה — בחן</div>
+                <div className="card" style={{borderColor: '#6B7280'}}>🐕 כלב — שקול הפסקה</div>
               </div>
             </>
           )}
@@ -529,13 +529,13 @@ export default function ReportsPage() {
       {/* Calculator Tab */}
       {activeTab === 'calc' && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">ð§® ×××©××× ×¨××××××ª</h2>
+          <h2 className="text-lg font-semibold">🧮 מחשבון רווחיות</h2>
           <div className="card space-y-3">
             {[
-              { label: '××× ×¡××ª âª', val: calcRevenue, set: setCalcRevenue },
-              { label: '××××¨× ××× âª', val: calcRaw, set: setCalcRaw },
-              { label: '×©××¨ ×¢×××× âª', val: calcLabor, set: setCalcLabor },
-              { label: '×¢×××××ª ×§×××¢××ª âª', val: calcFixed, set: setCalcFixed },
+              { label: 'הכנסות ₪', val: calcRevenue, set: setCalcRevenue },
+              { label: 'חומרי גלם ₪', val: calcRaw, set: setCalcRaw },
+              { label: 'שכר עבודה ₪', val: calcLabor, set: setCalcLabor },
+              { label: 'עלויות קבועות ₪', val: calcFixed, set: setCalcFixed },
             ].map(field => (
               <div key={field.label}>
                 <label className="text-sm font-medium">{field.label}</label>
@@ -552,21 +552,21 @@ export default function ReportsPage() {
           </div>
           {rev > 0 && (
             <div className="card space-y-2">
-              <h3 className="font-semibold">×ª××¦×××ª</h3>
+              <h3 className="font-semibold">תוצאות</h3>
               {[
-                { label: '×¨××× ×××××', value: grossProfit, pct: grossMarginPct },
-                { label: '×¨××× × ×§×', value: netProfit, pct: netMarginPct },
+                { label: 'רווח גולמי', value: grossProfit, pct: grossMarginPct },
+                { label: 'רווח נקי', value: netProfit, pct: netMarginPct },
               ].map(item => (
                 <div key={item.label} className="flex justify-between items-center">
                   <span>{item.label}:</span>
                   <span className={`font-bold text-lg ${item.value >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    âª{item.value.toLocaleString()} ({item.pct.toFixed(1)}%)
+                    ₪{item.value.toLocaleString()} ({item.pct.toFixed(1)}%)
                   </span>
                 </div>
               ))}
               <div className="flex justify-between items-center border-t pt-2" style={{borderColor: 'var(--border)'}}>
-                <span>× ×§×××ª ×××××:</span>
-                <span className="font-bold text-lg">âª{Math.round(breakEven).toLocaleString()}</span>
+                <span>נקודת איזון:</span>
+                <span className="font-bold text-lg">₪{Math.round(breakEven).toLocaleString()}</span>
               </div>
             </div>
           )}
@@ -580,12 +580,12 @@ export default function ReportsPage() {
           <div className="w-full max-w-md card space-y-3 max-h-screen overflow-y-auto">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-bold">
-                {editReport.id ? '×¢×××× ×××' : '×××¡×£ ××× ××××©×'}
+                {editReport.id ? 'עדכון דוח' : 'הוסף דוח חודשי'}
               </h3>
-              <button onClick={() => { setShowModal(false); setEditReport({}); }}>â</button>
+              <button onClick={() => { setShowModal(false); setEditReport({}); }}>✕</button>
             </div>
             <div>
-              <label className="text-sm font-medium">××××©</label>
+              <label className="text-sm font-medium">חודש</label>
               <input
                 type="month"
                 className="input mt-1"
@@ -594,11 +594,11 @@ export default function ReportsPage() {
               />
             </div>
             {[
-              { label: '××× ×¡××ª âª', key: 'revenue' },
-              { label: '×¡×"× ×××¦×××ª âª', key: 'expenses' },
-              { label: '××××¨× ××× âª', key: 'raw_materials' },
-              { label: '×©××¨ ×¢×××× âª', key: 'labor_cost' },
-              { label: '×¢×××××ª ×§×××¢××ª âª', key: 'fixed_costs' },
+              { label: 'הכנסות ₪', key: 'revenue' },
+              { label: 'סה"כ הוצאות ₪', key: 'expenses' },
+              { label: 'חומרי גלם ₪', key: 'raw_materials' },
+              { label: 'שכר עבודה ₪', key: 'labor_cost' },
+              { label: 'עלויות קבועות ₪', key: 'fixed_costs' },
             ].map(field => (
               <div key={field.key}>
                 <label className="text-sm font-medium">{field.label}</label>
@@ -613,20 +613,20 @@ export default function ReportsPage() {
               </div>
             ))}
             <div>
-              <label className="text-sm font-medium">××¢×¨××ª</label>
+              <label className="text-sm font-medium">הערות</label>
               <textarea
                 className="input mt-1"
                 rows={2}
                 value={editReport.notes || ''}
                 onChange={e => setEditReport(p => ({ ...p, notes: e.target.value }))}
-                placeholder="××¢×¨××ª ×××¤×¦××× ××××ª..."
+                placeholder="הערות אופציונליות..."
               />
             </div>
             {/* Preview calculation */}
             {editReport.revenue && editReport.expenses && (
               <div className="p-2 rounded text-sm" style={{background: 'var(--surface)'}}>
-                <div>×¨××× ×××××: <strong>âª{((editReport.revenue || 0) - (editReport.expenses || 0)).toLocaleString()}</strong></div>
-                <div>×¨××× × ×§×: <strong>âª{((editReport.revenue || 0) - (editReport.expenses || 0) - (editReport.labor_cost || 0) - (editReport.fixed_costs || 0)).toLocaleString()}</strong></div>
+                <div>רווח גולמי: <strong>₪{((editReport.revenue || 0) - (editReport.expenses || 0)).toLocaleString()}</strong></div>
+                <div>רווח נקי: <strong>₪{((editReport.revenue || 0) - (editReport.expenses || 0) - (editReport.labor_cost || 0) - (editReport.fixed_costs || 0)).toLocaleString()}</strong></div>
               </div>
             )}
             <div className="flex gap-2 pt-2">
@@ -635,13 +635,13 @@ export default function ReportsPage() {
                 onClick={saveReport}
                 disabled={saving}
               >
-                {saving ? '×©×××¨...' : '×©×××¨ ×××'}
+                {saving ? 'שומר...' : 'שמור דוח'}
               </button>
               <button
                 className="btn-secondary"
                 onClick={() => { setShowModal(false); setEditReport({}); }}
               >
-                ×××××
+                ביטול
               </button>
             </div>
           </div>
@@ -650,17 +650,17 @@ export default function ReportsPage() {
 
       {activeTab === 'import' && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">ייבוא נתונים מקובץ</h2>
+          <h2 className="text-lg font-semibold">����� ������ �����</h2>
           <div className="card">
             <div className="mb-4">
-              <label className="block text-sm mb-1" style={{color:'var(--muted)'}}>חודש</label>
+              <label className="block text-sm mb-1" style={{color:'var(--muted)'}}>����</label>
               <input type="month" className="input" value={importMonth} onChange={e => setImportMonth(e.target.value)} />
             </div>
             <div className="mb-4">
-              <label className="block text-sm mb-2" style={{color:'var(--muted)'}}>העלאת קובץ CSV</label>
+              <label className="block text-sm mb-2" style={{color:'var(--muted)'}}>����� ���� CSV</label>
               <p className="text-xs mb-3" style={{color:'var(--muted)'}}>
-                פורמט: קוד מוצר,שם מוצר,כמות,הכנסות<br/>
-                דוגמא: 6000,מאפים,70,4200
+                �����: ��� ����,�� ����,����,������<br/>
+                �����: 6000,�����,70,4200
               </p>
               <input
                 type="file"
@@ -675,19 +675,19 @@ export default function ReportsPage() {
           {importedRows.length > 0 && (
             <div className="card">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="font-semibold">נתונים שזוהו ({importedRows.length} מוצרים)</h3>
+                <h3 className="font-semibold">������ ����� ({importedRows.length} ������)</h3>
                 <button className="btn-primary text-sm px-3 py-1.5" onClick={saveImportedProducts}>
-                  שמור
+                  ����
                 </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{color:'var(--muted)'}}>
-                      <th className="text-right pb-2">קוד</th>
-                      <th className="text-right pb-2">שם מוצר</th>
-                      <th className="text-right pb-2">כמות</th>
-                      <th className="text-right pb-2">הכנסות (ש")ח)</th>
+                      <th className="text-right pb-2">���</th>
+                      <th className="text-right pb-2">�� ����</th>
+                      <th className="text-right pb-2">����</th>
+                      <th className="text-right pb-2">������ (�")�)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -696,15 +696,15 @@ export default function ReportsPage() {
                         <td className="py-1.5">{row.code}</td>
                         <td className="py-1.5">{row.name}</td>
                         <td className="py-1.5">{row.quantity.toLocaleString()}</td>
-                        <td className="py-1.5 text-green-400">₪{row.revenue.toLocaleString()}</td>
+                        <td className="py-1.5 text-green-400">�{row.revenue.toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot>
                     <tr className="border-t font-semibold" style={{borderColor:'var(--muted)'}}>
-                      <td colSpan={2} className="pt-2">סה"כ</td>
+                      <td colSpan={2} className="pt-2">��"�</td>
                       <td className="pt-2">{importedRows.reduce((s,r)=>s+r.quantity,0).toLocaleString()}</td>
-                      <td className="pt-2 text-green-400">₪{importedRows.reduce((s,r)=>s+r.revenue,0).toLocaleString()}</td>
+                      <td className="pt-2 text-green-400">�{importedRows.reduce((s,r)=>s+r.revenue,0).toLocaleString()}</td>
                     </tr>
                   </tfoot>
                 </table>
